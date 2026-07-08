@@ -2,19 +2,26 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'   // Name must match a Maven installation configured in Manage Jenkins > Tools
+        maven 'Maven3'   // Name must match a Maven installation configured in
+                         // Manage Jenkins > Tools
     }
 
     environment {
         IMAGE_NAME = "devops-cicd-lab"
         IMAGE_TAG  = "${env.BUILD_NUMBER}"
         CONTAINER_NAME = "devops-cicd-lab-container"
-        DOCKERHUB_CREDS = credentials('dockerhub-creds') 
-        DOCKERHUB_REPO  = "likithus/ics-build-demo" // Removed the trailing ':tagname'
+        DOCKERHUB_CREDS = credentials('dockerhub-creds') // configured in Jenkins credentials store
+        DOCKERHUB_REPO  = "likithus/ics-build-demo"
     }
 
     stages {
-        // REMOVED: Manual 'Checkout' stage. Jenkins handles this automatically.
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/leionor-internal/DevOps-Lab.git'
+            }
+        }
 
         stage('Build with Maven') {
             steps {
@@ -43,7 +50,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", ".")
+                    dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                 }
             }
         }
