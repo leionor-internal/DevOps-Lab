@@ -10,29 +10,21 @@ pipeline {
         IMAGE_TAG  = "${env.BUILD_NUMBER}"
         CONTAINER_NAME = "devops-cicd-lab-container"
         DOCKERHUB_CREDS = credentials('dockerhub-creds') 
-        // Fixed: Removed the trailing ':tagname' from the base repository path
-        DOCKERHUB_REPO  = "likithus/ics-build-demo" 
+        DOCKERHUB_REPO  = "likithus/ics-build-demo" // Removed the trailing ':tagname'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/leionor-internal/DevOps-Lab.git'
-            }
-        }
+        // REMOVED: Manual 'Checkout' stage. Jenkins handles this automatically.
 
         stage('Build with Maven') {
             steps {
-                // Fixed: Added -f flag to point to the subfolder POM file
-                sh 'mvn -f devops-cicd-lab/pom.xml clean compile'
+                sh 'mvn clean compile'
             }
         }
 
         stage('Run Unit Tests') {
             steps {
-                // Fixed: Added -f flag to run tests within the subfolder
-                sh 'mvn -f devops-cicd-lab/pom.xml test'
+                sh 'mvn test'
             }
             post {
                 always {
@@ -43,18 +35,15 @@ pipeline {
 
         stage('Package JAR') {
             steps {
-                // Fixed: Added -f flag to build the package within the subfolder
-                sh 'mvn -f devops-cicd-lab/pom.xml package -DskipTests'
-                archiveArtifacts artifacts: 'devops-cicd-lab/target/*.jar', fingerprint: true
+                sh 'mvn package -DskipTests'
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Fixed: Explicitly passed the subfolder path as the build context path 
-                    // and specified the Dockerfile path.
-                    dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f devops-cicd-lab/Dockerfile devops-cicd-lab/")
+                    dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", ".")
                 }
             }
         }
